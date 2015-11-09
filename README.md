@@ -1,5 +1,6 @@
-code-explainer
-=========
+##&lt;code-explainer&gt;
+
+[Live Demo](http://kjlubick.github.io/code-explainer/)
 
 Making pretty and informative code snippets.
 
