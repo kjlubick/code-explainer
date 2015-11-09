@@ -1,0 +1,486 @@
+<!--
+    @license
+    Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+    The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+    The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+    Code distributed by Google as part of the polymer project is also
+    subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-selector/iron-selector.html">
+<link rel="import" href="../iron-media-query/iron-media-query.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../prettify-element/prettify-element.html">
+
+<!-- Private element used by `code-explainer`. -->
+<dom-module id="code-explainer-section">
+
+<!--
+    FIXME(kschaaf): Note, adding line breaks before/after any of the tags
+    inside the template breaks the inline-ness of the spans this element
+    wraps, which is why it isn't properly spacey.
+ -->
+ <template><style>
+
+  .content {
+    border-bottom: 1px rgba(0,128,0,0.4) dashed;
+  }
+
+  .content.highlight {
+    background-color: rgba(100,123,253,0.3);
+  }
+
+</style><span class$="{{computedClasses}}"><content></content></span></template>
+
+<script>
+
+  Polymer({
+    is:"code-explainer-section",
+
+    properties: {
+      sec: {
+        type: String,
+        value: '',
+      },
+      highlight: {
+        type: Boolean,
+        value: false,
+        notify: true
+      },
+      computedClasses: {
+        type: String,
+        computed: "_calculateContentClass(highlight)",
+      }
+    },
+
+    listeners: {
+      mouseenter: 'over',
+      tap: 'tap'
+    },
+
+    over: function() {
+      this.fire('select', {code: true, sec: this.sec});
+    },
+
+    tap: function() {
+      this.fire('select', {code: true, sec: this.sec, tapped: true})
+    },
+
+    _calculateContentClass: function(highlight) {
+      if (highlight) {
+        return "content highlight";
+      }
+      return "content";
+    }
+  });
+
+</script>
+</dom-module>
+
+<!--
+The `code-explainer-info` should be included as children of a `code-explainer`
+element to provide annotations to tagged sections of the code.
+See <a href="#code-explainer">`code-explainer`</a> for more information.
+
+@element code-explainer-info
+@status beta
+@homepage github.io
+-->
+<dom-module id="code-explainer-info">
+  <style>
+
+    :host {
+      display: block;
+    }
+
+    :host.iron-selected {
+      background-color: #657cfe;
+    }
+
+    .bullet {
+      font-weight: bold;
+      background: #1f2035;
+      width: 24px;
+      height: 24px;
+      text-align: center;
+      border-radius: 12px;
+      margin-right: 8px;
+    }
+    .label {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .content {
+      margin-top: 4px;
+      line-height: 20px;
+    }
+
+    ::content :host code {
+      color: white;
+    }
+
+    #title {
+      @apply(--layout-horizontal);
+    }
+  </style>
+  <template>
+  <div id="title">
+    <div hidden$="{{!bullet}}" class="bullet">{{bullet}}</div>
+    <div class="label">{{label}}.</div>
+  </div>
+  <iron-collapse class="content" opened="{{open}}"><content></content></iron-collapse>
+</template>
+  <script>
+    Polymer({
+      is: 'code-explainer-info',
+      properties: {
+        active: {
+          type: Boolean,
+          value: false,
+          notify: true,
+          observer: 'activeChanged'
+        },
+        bullet: {
+          type: Number,
+          value: 0,
+          notify: true
+        },
+        /**
+         * When true, the code-explainer-info collapses to just the label when
+         * not hovered.
+         * @attribute collapsable
+         * @type Boolean
+         */
+        collapsable: {
+          type: Boolean,
+          value: false,
+          notify: true
+        },
+
+        /**
+         * Freeform text describing this section in the explainer.  Gets special
+         * styling treatment.
+         * @attribute label
+         * @type String
+         */
+        label: {
+          type: String,
+          value: ''
+        },
+        open: {
+          type: Boolean,
+          value: false
+        },
+        /**
+         * Section name that maps to one or more `[start-xyz]`/`[end-xyz]` tags
+         * in the code snippit (where `xyz` maps to this `sec` property).  Must
+         * be a letter, number, or underscore.
+         * @attribute sec
+         * @type String
+         */
+        sec: {
+          type: String,
+          value: ''
+        }
+      },
+      listeners: {
+        mouseenter: 'over',
+        mouseleave: 'out',
+        tap: 'tap'
+      },
+      attached: function () {
+        this.open = !this.collapsable;
+      },
+      activeChanged: function () {
+        if (this.collapsable) {
+          this.open = this.active;
+        }
+      },
+      over: function () {
+        this.fire('select', { sec: this.sec });
+      },
+      out: function () {
+        this.fire('select');
+      },
+      tap: function () {
+        this.fire('select', {
+          sec: this.sec,
+          tapped: true
+        });
+      }
+    });
+  </script>
+</dom-module>
+
+<!--
+The `code-explainer` element is a high-level element for displaying a snippit of
+syntax-highlighted code alongside a sidebar of supplied `code-explainer-info`
+elements that describe sections of the code.
+
+Code is supplied via a child `<template>` or `<script type="template">` tag containing
+the code to be syntax  highlighted (HTML markup need not be escaped).  Explanatory
+text should be supplied using child `<code-explainer-info>` elements.  Sections of
+the code can be tagged using special `[start-xyz]...[end-xyz]` tags, where `xyz` is a
+string mapping code sections to a supplied `code-explainer-info` element whose `sec`
+attribute matches.  Both the tagged code sections and explainer text are hoverable to
+highlight and draw attention to the section of code being explained.  More than one
+code sections tagged with `[start-xyz]...[enx-xyz]` can be supplied for a given
+section.
+
+Example:
+
+    <code-explainer label="How bindings work">
+      <template>
+        <script type="text/template">
+          <div class="foo">[start-mustache]{{userName}}[end-mustache]</div>
+        </script>
+        <script>
+          Polymer({
+            [start-var]userName: "John"[end-var]
+          });
+        </script>
+      </template>
+      <h2>How bindings work</h2>
+      <div>You can bind variables to your view (and vice versa) by doing the following:</div>
+      <code-explainer-info sec="var" label="Define a variable">
+        Variables defined in the scope of a Polymer object are
+        available for binding.
+      </code-explainer-info>
+      <code-explainer-info sec="mustache" label="Insert a binding">
+        Bindings can be inserted into the view using <code>{{...}}</code>
+        mustache-style syntax.
+      </code-explainer-info>
+    </code-explainer>
+
+@element code-explainer
+@status beta
+@homepage github.io
+-->
+
+<dom-module id="code-explainer">
+  <template>
+  <style>
+
+    pre,.prettyprint {
+        color: #9f499b;
+        margin: 0;
+        background-color: #f8f8f8;
+        overflow-x: auto;
+        padding: 24px;
+        font-size: 14px;
+        font-family: "Source Code Pro",Monaco,Menlo,Consolas,"Courier New",monospace;
+    }
+    pre ::content .typ,pre ::content .inline,.prettyprint ::content .typ,.prettyprint ::content .inline {
+        color: #6b499f
+    }
+    pre ::content .pun,.prettyprint ::content .pun {
+        color: #5c6bc0
+    }
+    pre ::content .str,pre ::content .string,.prettyprint ::content .str,.prettyprint ::content .string {
+        color: #ff4081
+    }
+    pre ::content .pln,.prettyprint ::content .pln {
+        color: #7986cb
+    }
+    pre ::content .kwd,.prettyprint ::content .kwd {
+        color: #d61a7f
+    }
+    pre ::content .atn,pre ::content .attribute-name,.prettyprint ::content .atn,.prettyprint ::content .attribute-name {
+        color: #6b499f
+    }
+    pre ::content .atv,pre ::content .attribute-value,.prettyprint ::content .atv,.prettyprint ::content .attribute-value {
+        color: #7986cb
+    }
+    pre ::content .com,pre ::content .comment,.prettyprint ::content .com,.prettyprint ::content .comment {
+        color: #8a8a8a
+    }
+
+    pre#code ::content .dim span {
+      color: #ccc !important;
+    }
+
+    h2 {
+      color: rgb(31, 32, 54);
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      line-height: 48px;
+      margin: 0;
+      background-color: #f8f8f8;
+      padding: 16px 16px 0 16px;
+      font-size: 20px;
+    }
+
+    .sidebar {
+      width: 384px;
+      background-color: #595a70;
+      overflow-x: auto;
+      color: white;
+      padding: 12px 0;
+      font-size: 14px;
+      color: white;
+      @apply(--layout-vertical);
+      @apply(--layout-flex-none);
+    }
+
+    .sidebar:not([wide-layout]) {
+      width:100%;
+    }
+
+    ::content .sidebar > * {
+      padding: 12px 24px 12px 24px;
+    }
+
+    ::content .sidebar > code-explainer-info {
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+
+    ::content .sidebar > h2+div {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    ::content .sidebar:last-child {
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+
+    ::content .sidebar > h2 {
+      color: rgb(31, 32, 54);
+      background-color: #595a70;
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      line-height: 24px;
+      margin: 0;
+      color: white;
+    }
+
+    .clip {
+      padding-right: 24px;
+      overflow: hidden;
+      background-color: #f8f8f8;
+      @apply(--layout-vertical);
+      @apply(--layout-flex-auto);
+    }
+
+    #explainer:not([wide-layout]) {
+      @apply(--layout-vertical);
+    }
+
+    #explainer[wide-layout] {
+      @apply(--layout-horizontal);
+    }
+
+    #clip-wrapper:not([wide-layout]) {
+      @apply(--layout-vertical);
+      @apply(--layout-flex-auto);
+    }
+
+    #clip-wrapper[wide-layout] {
+      @apply(--layout-vertical);
+      @apply(--layout-flex);
+    }
+
+    #code {
+      @apply(--layout-flex-auto);
+    }
+
+  </style>
+
+  <iron-media-query query="(min-width: 940px)" query-matches="{{wide}}"></iron-media-query>
+  <div id="explainer" wide-layout$="{{wide}}">
+    <div id="clip-wrapper" wide-layout$="{{wide}}">
+      <h2 hidden$="{{!label}}">{{label}}</h2>
+      <div class="clip"><pre id="code" on-select="select"></pre></div>
+    </div>
+    <iron-selector id="selector" selected$="{{selected}}" attr-for-selected="sec" class="sidebar" wide-layout$="{{wide}}">
+      <content></content>
+    </iron-selector>
+  </div>
+
+</template>
+  <script>
+    Polymer({
+      is: 'code-explainer',
+      properties: {
+        /**
+         * Heading label text that descripes this code explainer.  Gets heading
+         * styling treatment.
+         * @attribute label
+         * @type String
+         */
+        label: {
+          type: String,
+          value: '',
+          notify: true
+        },
+        selected: {
+          type: String,
+          value: '',
+          notify: true,
+          observer: 'selectedChanged'
+        }
+      },
+      listeners: {
+        select: 'select'
+      },
+
+      attached: function () {
+        var tmpl = Polymer.dom(this).querySelector('template') || Polymer.dom(this).querySelector('script[type="text/template"]');
+        var code = tmpl && Polymer.dom(tmpl).innerHTML;
+        if (!code) {
+          console.warn('No code found in template: ', this);
+          return;
+        }
+        var indents = code.match('\n([ \t]+)');
+        var indent = indents && indents[0];
+        code = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        code = code.replace(/\[dim-start\]/g, '<span class="dim">');
+        code = code.replace(/\[dim-end\]/g, '</span>');
+        code = code.replace(/\[start-(\w+)\]/g, '<code-explainer-section sec="$1">');
+        code = code.replace(/\[end-(\w+)\]/g, '</code-explainer-section>');
+        if (indent) {
+          code = code.replace(new RegExp(indent, 'g'), '\n');
+        }
+        Polymer.dom(this.$.code).classList.add('prettyprint');
+        this.set('$.code.innerHTML', prettyPrintOne(code));
+      },
+      selectedChanged: function () {
+        var secs = Polymer.dom(this.shadyRoot).querySelectorAll('code-explainer-section');
+        secs.forEach(function(section){
+          var selected = (section.sec == this.selected);
+          section.highlight = selected;
+        }.bind(this));
+
+        var infos = Polymer.dom(this).querySelectorAll('code-explainer-info');
+        infos.forEach(function(info){
+          var selected = (info.sec == this.selected);
+          if (selected) {
+            info.setAttribute("active", "true");
+          } else {
+            info.removeAttribute("active");
+          }
+        }.bind(this));
+      },
+      select: function (e) {
+        if (this.hoverDelay) {
+          return;
+        }
+        this.selected = e.detail.sec;
+        if (e.detail.tapped) {
+          var type = e.detail.code ? 'code-explainer-info' : 'code-explainer-section';
+          var root = e.detail.code ? this : this.shadyRoot;
+          var sec = Polymer.dom(root).querySelector(type + '[sec="' + this.selected + '"]');
+          if (sec) {
+            this.hoverDelay = true;
+            sec.scrollIntoViewIfNeeded(true);
+            setTimeout(function () {
+              this.hoverDelay = false;
+            }.bind(this), 100);
+          }
+        }
+      }
+    });
+  </script>
+</dom-module>
