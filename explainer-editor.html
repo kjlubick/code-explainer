@@ -1,0 +1,70 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/code-explainer/code-explainer.html">
+<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="bower_components/paper-input/paper-textarea.html">
+
+<dom-module id="explainer-editor">
+  <template>
+    <style>
+      .editor-pane {
+         @apply(--layout-horizontal);
+      }
+
+      .left {
+        flex:1;
+      }
+
+      .text-editor {
+        width:90%;
+        height:600px;
+        margin:auto;
+        font-family:monospace;
+      }
+
+      .right {
+        flex:2;
+      }
+
+    </style>
+
+    <div class="editor-pane">
+
+      <div class="left">
+
+        <paper-textarea class="text-editor" value="{{code}}" label="Your code" rows="20"></paper-textarea>
+
+      </div>
+
+      <div class="right">
+
+        <h1>Preview</h1>
+
+        <code-explainer id="fred" class="preview" code="{{code}}"></code-explainer>
+
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+    Polymer({
+      is: 'explainer-editor',
+
+      properties: {
+        code: String,
+
+      },
+
+    });
+  </script>
+</dom-module>

@@ -10,6 +10,9 @@
     "iron-media-query": "PolymerElements/iron-media-query#~1.0.0",
     "prettify-element": "SmokyBob/prettify-element#1.0"
   },
+  "devDependencies": {
+    "paper-input": "PolymerElements/paper-input#~1.0.18"
+  },
   "resolutions": {
     "polymer": "^1.2.0"
   }

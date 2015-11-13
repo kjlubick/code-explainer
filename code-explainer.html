@@ -412,14 +412,18 @@ Example:
          */
         label: {
           type: String,
-          value: '',
-          notify: true
+          value: ''
         },
         selected: {
           type: String,
           value: '',
           notify: true,
           observer: 'selectedChanged'
+        },
+        code: {
+          type: String,
+          value: '',
+          observer: '_setCode'
         }
       },
       listeners: {
@@ -433,6 +437,9 @@ Example:
           console.warn('No code found in template: ', this);
           return;
         }
+        this.code = code;
+      },
+      _setCode: function(code) {
         var indents = code.match('\n([ \t]+)');
         var indent = indents && indents[0];
         code = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
