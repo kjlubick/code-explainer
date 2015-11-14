@@ -8,10 +8,11 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="bower_components/polymer/polymer.html">
-<link rel="import" href="bower_components/code-explainer/code-explainer.html">
-<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../code-explainer/code-explainer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<script src="../mousetrap/mousetrap.min.js"></script>
 
 <dom-module id="explainer-editor">
   <template>
@@ -32,7 +33,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .right {
-        flex:3  ;
+        flex:3;
       }
 
     </style>
@@ -70,6 +71,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
          type: String,
          value: starter,
          observer: "updatePreview",
+        },
+
+        ready: function() {
+
         }
 
       },

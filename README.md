@@ -16,6 +16,7 @@ npm install http-server
 # link code-explainer into the bower_components, where it expects to be
 mkdir bower_components/code-explainer
 ln code-explainer.html bower_components/code-explainer/code-explainer.html
+ln explainer-editor.html bower_components/code-explainer/explainer-editor.html
 
 node_modules/.bin/http-server -p 8080 -a 127.0.0.1
 # Navigate to localhost:8080/demo.html
