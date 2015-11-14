@@ -12,7 +12,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../code-explainer/code-explainer.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../paper-input/paper-textarea.html">
-<script src="../mousetrap/mousetrap.min.js"></script>
 
 <dom-module id="explainer-editor">
   <template>
@@ -25,7 +24,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         flex:2;
       }
 
-      .text-editor {
+      #editor {
         width:90%;
         height:600px;
         margin:auto;
@@ -42,7 +41,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <div class="left">
 
-        <paper-textarea class="text-editor" value="{{source}}" label="Your code" rows="20"></paper-textarea>
+        <paper-textarea id="editor" value="{{source}}" label="Your code" rows="20" on-keypress="_keys"></paper-textarea>
 
       </div>
 
@@ -60,9 +59,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
   (function () {
     // We can't just put <script> tags in our string or it throws off the outer script tags
+    var blurb = "<!--INSERT-BLURB-POINT-->\n";
     var starter = '<code-explainer>\n_script type="text/template">\n\t<!--Your code goes here-->\n _/script>\n'+
       '<h2>TODO: Title</h2>\n<div>TODO: Lead-in</div>\n<!--INSERT-BLURB-POINT-->\n</code-explainer>';
-    starter = starter.replace(/_/g, "<")
+    starter = starter.replace(/_/g, "<");
     Polymer({
       is: "explainer-editor",
 
@@ -72,11 +72,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
          value: starter,
          observer: "updatePreview",
         },
+      },
 
-        ready: function() {
-
+      _keys: function(e) {
+        if (!e.ctrlKey) {
+          return;
         }
+        if (e.keyCode == 2) {
+          this._addAnnotation(e.target.selectionStart, e.target.selectionEnd);
+          return;
+        }
+        console.log(e);
+      },
 
+      _addAnnotation: function(startIdx, endIdx) {
+        var text = this.source;
+        console.log(text.substring(startIdx, endIdx));
+        var toAdd = "[start-foo]";
+        text = insert(text, toAdd, startIdx);
+        text = insert(text, "[end-foo]", endIdx+toAdd.length);
+        blurbIdx = text.indexOf(blurb) + blurb.length;
+        text = insert(text, '<code-explainer-info label="TODO Label" sec="prop" bullet="1">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+        this.source = text;
       },
 
       updatePreview: function() {
@@ -85,6 +102,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
     });
+
+    function insert(src, str, index){
+      return src.slice(0, index) + str + src.slice(index);
+    }
+
   }());
   </script>
 </dom-module>
