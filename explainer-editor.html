@@ -21,7 +21,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .left {
-        flex:1;
+        flex:2;
       }
 
       .text-editor {
@@ -32,7 +32,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .right {
-        flex:2;
+        flex:3  ;
       }
 
     </style>
@@ -41,7 +41,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <div class="left">
 
-        <paper-textarea class="text-editor" value="{{code}}" label="Your code" rows="20"></paper-textarea>
+        <paper-textarea class="text-editor" value="{{source}}" label="Your code" rows="20"></paper-textarea>
 
       </div>
 
@@ -49,7 +49,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <h1>Preview</h1>
 
-        <code-explainer id="fred" class="preview" code="{{code}}"></code-explainer>
+        <div id="output"></div>
 
       </div>
     </div>
@@ -57,14 +57,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script>
+  (function () {
+    // We can't just put <script> tags in our string or it throws off the outer script tags
+    var starter = '<code-explainer>\n_script type="text/template">\n\t<!--Your code goes here-->\n _/script>\n'+
+      '<h2>TODO: Title</h2>\n<div>TODO: Lead-in</div>\n<!--INSERT-BLURB-POINT-->\n</code-explainer>';
+    starter = starter.replace(/_/g, "<")
     Polymer({
-      is: 'explainer-editor',
+      is: "explainer-editor",
 
       properties: {
-        code: String,
+        source: {
+         type: String,
+         value: starter,
+         observer: "updatePreview",
+        }
 
       },
 
+      updatePreview: function() {
+        // We can't just bind the source using {{}} because that becomes escaped html
+        this.set("$.output.innerHTML", this.source);
+      }
+
     });
+  }());
   </script>
 </dom-module>
