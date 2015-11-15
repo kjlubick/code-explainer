@@ -28,7 +28,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         width:90%;
         height:600px;
         margin:auto;
-        font-family:monospace;
+        --paper-input-container-input: {
+          font-family:monospace;
+          font-size:14px;
+        };
       }
 
       .right {
@@ -41,7 +44,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <div class="left">
 
-        <paper-textarea id="editor" value="{{source}}" label="Your code" rows="20" on-keypress="_keys"></paper-textarea>
+        <paper-textarea id="editor" value="{{source}}" label="Your code" rows="20" on-keydown="_keys"></paper-textarea>
 
       </div>
 
@@ -63,6 +66,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var starter = '<code-explainer>\n_script type="text/template">\n\t<!--Your code goes here-->\n _/script>\n'+
       '<h2>TODO: Title</h2>\n<div>TODO: Lead-in</div>\n<!--INSERT-BLURB-POINT-->\n</code-explainer>';
     starter = starter.replace(/_/g, "<");
+    var letters = /[a-zA-Z]+/;
     Polymer({
       is: "explainer-editor",
 
@@ -75,11 +79,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _keys: function(e) {
-        if (!e.ctrlKey) {
+        if (!e.altKey) {
           return;
         }
-        if (e.keyCode == 2) {
+        if (e.keyCode == 49) {
           this._addAnnotation(e.target.selectionStart, e.target.selectionEnd);
+          return;
+        }
+        if (e.keyCode == 50) {
+          console.log("Should make the previous tag!");
+          return;
+        }
+        if (e.keyCode == 51) {
+          console.log("Should rename the tag!");
+          console.log(e);
+          this._renameTag(e.target.selectionStart);
           return;
         }
         console.log(e);
@@ -87,21 +101,42 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _addAnnotation: function(startIdx, endIdx) {
         var text = this.source;
-        console.log(text.substring(startIdx, endIdx));
         var toAdd = "[start-foo]";
         text = insert(text, toAdd, startIdx);
         text = insert(text, "[end-foo]", endIdx+toAdd.length);
         blurbIdx = text.indexOf(blurb) + blurb.length;
-        text = insert(text, '<code-explainer-info label="TODO Label" sec="prop" bullet="1">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+        text = insert(text, '<code-explainer-info sec="foo" bullet="1" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+        // Write it once at the end to avoid firing the updatePreview more than once
         this.source = text;
       },
 
-      updatePreview: function() {
+      _renameTag: function(location) {
+        var text = this.source;
+        var tagEnd, tagStart;
+        for (tagEnd = location; tagEnd < text.length && isLetter(text[tagEnd]); tagEnd++){};
+        for (tagStart = location; tagStart > 0 && isLetter(text[tagStart]); tagStart--){};
+        tagStart++;
+        var tag = text.substring(tagStart, tagEnd);
+        console.log(tag);
+
+        text = text.replace(new RegExp('\\\[start-'+tag+'\\\]', 'g'), '[start-bar]');
+        text = text.replace(new RegExp('\\\[end-'+tag+ '\\\]', 'g'), '[end-bar]');
+        text = text.replace(new RegExp('code-explainer-info sec="'+tag+'"', 'g'), 'code-explainer-info sec="bar"');
+
+        this.source = text;
+
+      },
+
+      updatePreview: function(newSource, oldSource) {
         // We can't just bind the source using {{}} because that becomes escaped html
         this.set("$.output.innerHTML", this.source);
       }
 
     });
+
+    function isLetter(c) {
+      return c.toLowerCase() != c.toUpperCase();
+    }
 
     function insert(src, str, index){
       return src.slice(0, index) + str + src.slice(index);
