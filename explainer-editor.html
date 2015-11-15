@@ -12,6 +12,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../code-explainer/code-explainer.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
 
 <dom-module id="explainer-editor">
   <template>
@@ -46,6 +49,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <paper-textarea id="editor" value="{{source}}" label="Your code" rows="20" on-keydown="_keys"></paper-textarea>
 
+        <paper-dialog id="blurbpicker">
+          <p>Select an existing blurb id or type a new one.</p>
+          <paper-input label="New Blurb Id"></paper-input>
+          <paper-dropdown-menu label="Dinosaurs">
+            <paper-listbox class="dropdown-content">
+              <template is="dom-repeat" items="[[dinosaurs]]" as="dinosaur">
+                <paper-item>[[dinosaur]]</paper-item>
+              </template>
+            </paper-listbox>
+          </paper-dropdown-menu>
+          <div class="buttons">
+            <paper-button dialog-confirm autofocus>Make Blurb</paper-button>
+          </div>
+        </paper-dialog>
+
       </div>
 
       <div class="right">
@@ -76,6 +94,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
          value: starter,
          observer: "updatePreview",
         },
+        blurbNames: {
+          type: Array,
+          value: [],
+        }
       },
 
       _keys: function(e) {
@@ -100,14 +122,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _addAnnotation: function(startIdx, endIdx) {
-        var text = this.source;
-        var toAdd = "[start-foo]";
-        text = insert(text, toAdd, startIdx);
-        text = insert(text, "[end-foo]", endIdx+toAdd.length);
-        blurbIdx = text.indexOf(blurb) + blurb.length;
-        text = insert(text, '<code-explainer-info sec="foo" bullet="1" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
-        // Write it once at the end to avoid firing the updatePreview more than once
-        this.source = text;
+        var picker = this.$.blurbpicker;
+        picker.open();
+
+        var callback = function(e) {
+          picker.removeEventListener('iron-overlay-closed', callback);
+          if (picker.canceled) {
+            console.log("modal canceled");
+            return;
+          }
+          console.log("modal closed");
+
+          var text = this.source;
+          var toAdd = "[start-foo]";
+          text = insert(text, toAdd, startIdx);
+          text = insert(text, "[end-foo]", endIdx+toAdd.length);
+          blurbIdx = text.indexOf(blurb) + blurb.length;
+          text = insert(text, '<code-explainer-info sec="foo" bullet="1" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+          // Write it once at the end to avoid firing the updatePreview more than once
+          this.source = text;
+        }.bind(this);
+
+        picker.addEventListener('iron-overlay-closed', callback);
+
       },
 
       _renameTag: function(location) {
