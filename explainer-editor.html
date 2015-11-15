@@ -15,6 +15,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item.html">
+
 
 <dom-module id="explainer-editor">
   <template>
@@ -52,13 +56,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-dialog id="blurbpicker">
           <p>Select an existing blurb id or type a new one.</p>
           <paper-input label="New Blurb Id" id="blurbinput" autofocus></paper-input>
-          <paper-dropdown-menu label="Dinosaurs">
+
+          <paper-dropdown-menu label="Existing blurbs" id="existingblurb">
             <paper-listbox class="dropdown-content">
               <template is="dom-repeat" items="{{blurbNames}}" as="blurbid">
                 <paper-item>{{blurbid}}</paper-item>
               </template>
             </paper-listbox>
           </paper-dropdown-menu>
+
           <div class="buttons">
             <paper-button dialog-confirm autofocus>Make Blurb</paper-button>
           </div>
@@ -80,7 +86,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
   (function () {
     // We can't just put <script> tags in our string or it throws off the outer script tags
-    var _blurbInsertPoint = "<!--INSERT-BLURB-POINT-->\n";
+    var _blurbInsertPoint = "</code-explainer>";
     var starter = '<code-explainer>\n_script type="text/template">\n\t<!--Your code goes here-->\n _/script>\n'+
       '<h2>TODO: Title</h2>\n<div>TODO: Lead-in</div>\n<!--INSERT-BLURB-POINT-->\n</code-explainer>';
     starter = starter.replace(/_/g, "<");
@@ -123,28 +129,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _addAnnotation: function(startIdx, endIdx) {
+        var blurbIdx = this.source.indexOf(_blurbInsertPoint);
+        if (endIdx >= blurbIdx) {
+          // No-op
+          return;
+        }
         var picker = this.$.blurbpicker;
         picker.open();
 
         var callback = function(e) {
+          if (e.target != picker) {
+            return; // The dropdown menu triggers this as well
+          }
           picker.removeEventListener('iron-overlay-closed', callback);
           if (picker.canceled) {
-            console.log("modal canceled");
             return;
           }
-          var blurb = this.$.blurbinput.value;
-          this.$.blurbinput.value = "";
-          console.log(blurb);
-          this.push('blurbNames', blurb);
 
           var text = this.source;
+          var blurb = this.$.blurbinput.value;
+          if (blurb) {
+            this.push('blurbNames', blurb);
+            var i = this.blurbNames.length;
+            text = insert(text, '<code-explainer-info sec="'+ blurb + '" bullet="' + i + '" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+          } else {
+            blurb = this.$.existingblurb.value;
+          }
+
+          if (!blurb) {
+            return;   // both were empty
+          }
+
           var toAdd = "[start-" + blurb + "]";
           text = insert(text, toAdd, startIdx);
-          text = insert(text, "[end-"+ blurb + "]", endIdx+toAdd.length);
-          blurbIdx = text.indexOf(_blurbInsertPoint) + _blurbInsertPoint.length;
-          text = insert(text, '<code-explainer-info sec="'+ blurb + '" bullet="1" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+          text = insert(text, "[end-"+ blurb + "]", endIdx + toAdd.length);
+
           // Write it once at the end to avoid firing the updatePreview more than once
           this.source = text;
+          this.$.blurbinput.value = "";
+          this.$.existingblurb._setSelectedItem(undefined);
         }.bind(this);
 
         picker.addEventListener('iron-overlay-closed', callback);
