@@ -51,11 +51,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <paper-dialog id="blurbpicker">
           <p>Select an existing blurb id or type a new one.</p>
-          <paper-input label="New Blurb Id"></paper-input>
+          <paper-input label="New Blurb Id" id="blurbinput" autofocus></paper-input>
           <paper-dropdown-menu label="Dinosaurs">
             <paper-listbox class="dropdown-content">
-              <template is="dom-repeat" items="[[dinosaurs]]" as="dinosaur">
-                <paper-item>[[dinosaur]]</paper-item>
+              <template is="dom-repeat" items="{{blurbNames}}" as="blurbid">
+                <paper-item>{{blurbid}}</paper-item>
               </template>
             </paper-listbox>
           </paper-dropdown-menu>
@@ -80,7 +80,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
   (function () {
     // We can't just put <script> tags in our string or it throws off the outer script tags
-    var blurb = "<!--INSERT-BLURB-POINT-->\n";
+    var _blurbInsertPoint = "<!--INSERT-BLURB-POINT-->\n";
     var starter = '<code-explainer>\n_script type="text/template">\n\t<!--Your code goes here-->\n _/script>\n'+
       '<h2>TODO: Title</h2>\n<div>TODO: Lead-in</div>\n<!--INSERT-BLURB-POINT-->\n</code-explainer>';
     starter = starter.replace(/_/g, "<");
@@ -92,11 +92,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         source: {
          type: String,
          value: starter,
-         observer: "updatePreview",
+         observer: "updatePreview"
         },
         blurbNames: {
           type: Array,
           value: [],
+          notify: true
         }
       },
 
@@ -131,14 +132,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             console.log("modal canceled");
             return;
           }
-          console.log("modal closed");
+          var blurb = this.$.blurbinput.value;
+          this.$.blurbinput.value = "";
+          console.log(blurb);
+          this.push('blurbNames', blurb);
 
           var text = this.source;
-          var toAdd = "[start-foo]";
+          var toAdd = "[start-" + blurb + "]";
           text = insert(text, toAdd, startIdx);
-          text = insert(text, "[end-foo]", endIdx+toAdd.length);
-          blurbIdx = text.indexOf(blurb) + blurb.length;
-          text = insert(text, '<code-explainer-info sec="foo" bullet="1" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+          text = insert(text, "[end-"+ blurb + "]", endIdx+toAdd.length);
+          blurbIdx = text.indexOf(_blurbInsertPoint) + _blurbInsertPoint.length;
+          text = insert(text, '<code-explainer-info sec="'+ blurb + '" bullet="1" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
           // Write it once at the end to avoid firing the updatePreview more than once
           this.source = text;
         }.bind(this);

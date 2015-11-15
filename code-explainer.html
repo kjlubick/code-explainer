@@ -440,12 +440,16 @@ Example:
         this.code = code;
       },
       _setCode: function(code) {
+        var indents = code.match('\n([ \t]*)');
+        var indent = indents && indents[0];
         code = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         code = code.replace(/\[dim-start\]/g, '<span class="dim">');
         code = code.replace(/\[dim-end\]/g, '</span>');
         code = code.replace(/\[start-(\w+)\]/g, '<code-explainer-section sec="$1">');
         code = code.replace(/\[end-(\w+)\]/g, '</code-explainer-section>');
-
+        if (indent) {
+          code = code.replace(new RegExp(indent, 'g'), '\n');
+        }
         Polymer.dom(this.$.code).classList.add('prettyprint');
         this.set('$.code.innerHTML', prettyPrintOne(code));
       },
