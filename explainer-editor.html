@@ -102,8 +102,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         blurbNames: {
           type: Array,
-          value: [],
-          notify: true
+          value: []
+        },
+        previousBlurbName: {
+          type: String,
+          value: ""
         }
       },
 
@@ -116,16 +119,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         if (e.keyCode == 50) {
-          console.log("Should make the previous tag!");
+          this._addExistingAnnotation(this.previousBlurbName, e.target.selectionStart, e.target.selectionEnd, this.source);
           return;
         }
         if (e.keyCode == 51) {
           console.log("Should rename the tag!");
-          console.log(e);
           this._renameTag(e.target.selectionStart);
           return;
         }
-        console.log(e);
       },
 
       _addAnnotation: function(startIdx, endIdx) {
@@ -156,22 +157,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             blurb = this.$.existingblurb.value;
           }
 
-          if (!blurb) {
-            return;   // both were empty
-          }
+          this._addExistingAnnotation(blurb, startIdx, endIdx, text);
 
-          var toAdd = "[start-" + blurb + "]";
-          text = insert(text, toAdd, startIdx);
-          text = insert(text, "[end-"+ blurb + "]", endIdx + toAdd.length);
+          this.previousBlurbName = blurb;
 
-          // Write it once at the end to avoid firing the updatePreview more than once
-          this.source = text;
-          this.$.blurbinput.value = "";
-          this.$.existingblurb._setSelectedItem(undefined);
         }.bind(this);
 
         picker.addEventListener('iron-overlay-closed', callback);
 
+      },
+
+      _addExistingAnnotation: function(blurb, startIdx, endIdx, text) {
+        if (!blurb) {
+            return;   // both were empty, do nothing
+          }
+        var toAdd = "[start-" + blurb + "]";
+        text = insert(text, toAdd, startIdx);
+        text = insert(text, "[end-"+ blurb + "]", endIdx + toAdd.length);
+
+        // Write it once at the end to avoid firing the updatePreview more than once
+        this.source = text;
+        this.$.blurbinput.value = "";
+        this.$.existingblurb._setSelectedItem(undefined);
       },
 
       _renameTag: function(location) {
