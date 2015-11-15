@@ -70,6 +70,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </div>
         </paper-dialog>
 
+        <paper-dialog id="blurbrename">
+          <paper-input label="Rename blurb" id="newblurbname" autofocus></paper-input>
+
+          <div class="buttons">
+            <paper-button dialog-confirm autofocus>Rename Blurb</paper-button>
+          </div>
+        </paper-dialog>
+
       </div>
 
       <div class="right">
@@ -104,9 +112,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: Array,
           value: []
         },
-        previousBlurbName: {
-          type: String,
-          value: ""
+        previousBlurbIndex: {
+          type: Number,
+          value: -1
         }
       },
 
@@ -114,18 +122,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!e.altKey) {
           return;
         }
+        // Alt + 1 - make new blurb
         if (e.keyCode == 49) {
           this._addAnnotation(e.target.selectionStart, e.target.selectionEnd);
-          return;
         }
-        if (e.keyCode == 50) {
-          this._addExistingAnnotation(this.previousBlurbName, e.target.selectionStart, e.target.selectionEnd, this.source);
-          return;
+        // Alt + 2 - use previous blurb
+        else if (e.keyCode == 50) {
+          if (this.previousBlurbIndex >= 0) {
+            this._addExistingAnnotation(this.blurbNames[this.previousBlurbIndex], e.target.selectionStart, e.target.selectionEnd, this.source);
+          }
         }
-        if (e.keyCode == 51) {
-          console.log("Should rename the tag!");
+        // Alt + 3 - rename blurb
+        else if (e.keyCode == 51) {
           this._renameTag(e.target.selectionStart);
-          return;
         }
       },
 
@@ -159,8 +168,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           this._addExistingAnnotation(blurb, startIdx, endIdx, text);
 
-          this.previousBlurbName = blurb;
-
         }.bind(this);
 
         picker.addEventListener('iron-overlay-closed', callback);
@@ -169,7 +176,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _addExistingAnnotation: function(blurb, startIdx, endIdx, text) {
         if (!blurb) {
-            return;   // both were empty, do nothing
+            return;
           }
         var toAdd = "[start-" + blurb + "]";
         text = insert(text, toAdd, startIdx);
@@ -177,25 +184,56 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         // Write it once at the end to avoid firing the updatePreview more than once
         this.source = text;
+
         this.$.blurbinput.value = "";
         this.$.existingblurb._setSelectedItem(undefined);
+        this.previousBlurbIndex = this.blurbNames.indexOf(blurb);
       },
 
       _renameTag: function(location) {
         var text = this.source;
         var tagEnd, tagStart;
+        // Go fowrard and backward searching for non-character boundries
         for (tagEnd = location; tagEnd < text.length && isLetter(text[tagEnd]); tagEnd++){};
         for (tagStart = location; tagStart > 0 && isLetter(text[tagStart]); tagStart--){};
         tagStart++;
-        var tag = text.substring(tagStart, tagEnd);
-        console.log(tag);
+        var oldName = text.substring(tagStart, tagEnd);
+        if (text.substring(tagStart - 7, tagEnd + 1) != ("[start-"+oldName+"]") &&
+            text.substring(tagStart - 5, tagEnd + 1) != ("[end-"+oldName+"]")) {
+          return;
+        }
 
-        text = text.replace(new RegExp('\\\[start-'+tag+'\\\]', 'g'), '[start-bar]');
-        text = text.replace(new RegExp('\\\[end-'+tag+ '\\\]', 'g'), '[end-bar]');
-        text = text.replace(new RegExp('code-explainer-info sec="'+tag+'"', 'g'), 'code-explainer-info sec="bar"');
+        var renamer = this.$.blurbrename;
+        renamer.open();
 
-        this.source = text;
+        var callback = function(e) {
+          if (e.target != renamer) {
+            return;
+          }
+          renamer.removeEventListener('iron-overlay-closed', callback);
+          if (renamer.canceled) {
+            return;
+          }
 
+          var text = this.source;
+          var blurb = this.$.newblurbname.value;
+          if (!blurb) {
+            return;
+          }
+
+          text = text.replace(new RegExp('\\\[start-' + oldName + '\\\]', 'g'), '[start-'+ blurb + ']');
+          text = text.replace(new RegExp('\\\[end-' + oldName + '\\\]', 'g'), '[end-' + blurb + ']');
+          text = text.replace(new RegExp('code-explainer-info sec="' + oldName + '"', 'g'), 'code-explainer-info sec="'+ blurb + '"');
+
+          // replace the name in the array (the Polymer way)
+          this.splice('blurbNames', this.blurbNames.indexOf(oldName), 1, blurb);
+          this.$.newblurbname.value = "";
+
+          this.source = text;
+
+        }.bind(this);
+
+        renamer.addEventListener('iron-overlay-closed', callback);
       },
 
       updatePreview: function(newSource, oldSource) {
