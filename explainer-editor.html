@@ -95,8 +95,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   (function () {
     // We can't just put <script> tags in our string or it throws off the outer script tags
     var _blurbInsertPoint = "</code-explainer>";
-    var starter = '<code-explainer>\n_script type="text/template">\n\t<!--Your code goes here-->\n _/script>\n'+
-      '<h2>TODO: Title</h2>\n<div>TODO: Lead-in</div>\n<!--INSERT-BLURB-POINT-->\n</code-explainer>';
+    var starter = '<code-explainer>\n  _script type="text/template">\n    <!--Your code goes here-->\n  _/script>\n'+
+      '  <h2>TODO: Title</h2>\n  <div>TODO: Lead-in</div>\n</code-explainer>';
     starter = starter.replace(/_/g, "<");
     var letters = /[a-zA-Z]+/;
     Polymer({
@@ -161,7 +161,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (blurb) {
             this.push('blurbNames', blurb);
             var i = this.blurbNames.length;
-            text = insert(text, '<code-explainer-info sec="'+ blurb + '" bullet="' + i + '" label="TODO Label">\n\tTODO Description\n</code-explainer-info>\n', blurbIdx);
+            text = insert(text, '  <code-explainer-info sec="'+ blurb + '" bullet="' + i + '" label="TODO Label">\n    TODO Description\n  </code-explainer-info>\n', blurbIdx);
           } else {
             blurb = this.$.existingblurb.value;
           }
